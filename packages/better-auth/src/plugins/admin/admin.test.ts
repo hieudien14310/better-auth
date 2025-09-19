@@ -802,12 +802,20 @@ describe("Admin plugin", async () => {
 
 describe("access control", async (it) => {
 	const ac = createAccessControl({
-		user: ["create", "read", "update", "delete", "list", "bulk-delete"],
+		user: [
+			"create",
+			"read",
+			"update",
+			"delete",
+			"list",
+			"bulk-delete",
+			"list-ac",
+		],
 		order: ["create", "read", "update", "delete", "update-many"],
 	});
 
 	const adminAc = ac.newRole({
-		user: ["create", "read", "update", "delete", "list"],
+		user: ["create", "read", "update", "delete", "list", "list-ac"],
 		order: ["create", "read", "update", "delete"],
 	});
 	const userAc = ac.newRole({
@@ -873,6 +881,20 @@ describe("access control", async (it) => {
 	});
 
 	const { headers, user } = await signInWithTestUser();
+	it("should allow admin to list access control", async () => {
+		const res = await client.admin.listAccessContorl(
+			{ query: {} },
+			{ headers },
+		);
+		expect(res.data).toBeDefined();
+		expect(res.data).toBeTypeOf("object");
+		expect(res.data).toHaveProperty("accessControl");
+
+		expect(res.data?.accessControl).toHaveProperty("admin");
+		expect(res.data?.accessControl.admin).toHaveProperty("user");
+		expect(Array.isArray(res.data?.accessControl.admin.user)).toBe(true);
+		expect(res.data?.accessControl.admin.user).toContain("create");
+	});
 
 	it("should validate on the client", async () => {
 		const canCreateOrder = client.admin.checkRolePermission({
