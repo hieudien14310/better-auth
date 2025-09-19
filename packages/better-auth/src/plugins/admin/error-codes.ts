@@ -18,6 +18,8 @@ export const ADMIN_ERROR_CODES = {
 		"You are not allowed to set users password",
 	BANNED_USER: "You have been banned from this application",
 	YOU_ARE_NOT_ALLOWED_TO_GET_USER: "You are not allowed to get user",
+	YOU_ARE_NOT_ALLOWED_TO_LIST_ACCESS_CONTROL:
+		"You are not allowed to list access control",
 	NO_DATA_TO_UPDATE: "No data to update",
 	YOU_ARE_NOT_ALLOWED_TO_UPDATE_USERS: "You are not allowed to update users",
 	YOU_CANNOT_REMOVE_YOURSELF: "You cannot remove yourself",

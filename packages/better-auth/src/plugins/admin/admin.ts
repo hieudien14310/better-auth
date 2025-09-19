@@ -10,7 +10,7 @@ import { deleteSessionCookie, setSessionCookie } from "../../cookies";
 import { getDate } from "../../utils/date";
 import { getEndpointResponse } from "../../utils/plugin-helper";
 import { mergeSchema, parseUserOutput } from "../../db/schema";
-import { type AccessControl } from "../access";
+import { type AccessControl, type Role } from "../access";
 import { ADMIN_ERROR_CODES } from "./error-codes";
 import { defaultStatements } from "./access";
 import { hasPermission } from "./has-permission";
@@ -732,6 +732,110 @@ export const admin = <O extends AdminOptions>(options?: O) => {
 							total: 0,
 						});
 					}
+				},
+			),
+			/**
+			 * ### Endpoint
+			 *
+			 * GET `/admin/list-access-control`
+			 *
+			 * ### API Methods
+			 *
+			 * **server:**
+			 * `auth.api.listAccessControl`
+			 *
+			 * **client:**
+			 * `authClient.admin.listAccessControl`
+			 *
+			 * @see [Read our docs to learn more.](https://www.better-auth.com/docs/plugins/admin#list-access-control)
+			 */
+			listAccessControl: createAuthEndpoint(
+				"/admin/list-access-contorl",
+				{
+					method: "GET",
+					use: [adminMiddleware],
+					query: z.object({
+						permission: z
+							.string()
+							.meta({
+								description:
+									"The field can use for the search. Using operator `===` to compare.",
+							})
+							.optional(),
+					}),
+					metadata: {
+						openapi: {
+							operationId: "listAccessControl",
+							summary: "List all access control",
+							description:
+								"Retrieve all roles and the corresponding permissions (for each role) that you have configured for user authorization.",
+							responses: {
+								200: {
+									description: "List of Access Control",
+									content: {
+										"application/json": {
+											schema: {
+												type: "object",
+												properties: {
+													accessControl: {
+														type: "object",
+														additionalProperties: {
+															type: "object",
+															additionalProperties: {
+																type: "array",
+																items: { type: "string" },
+															},
+														},
+													},
+												},
+												required: ["accessControl"],
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				async (ctx) => {
+					const { permission } = ctx.query;
+					const session = ctx.context.session;
+					const canListAc = hasPermission({
+						userId: ctx.context.session.user.id,
+						role: session.user.role,
+						options: opts,
+						permissions: { user: ["list-ac"] },
+					});
+					if (!canListAc) {
+						throw new APIError("FORBIDDEN", {
+							message:
+								ADMIN_ERROR_CODES.YOU_ARE_NOT_ALLOWED_TO_LIST_ACCESS_CONTROL,
+						});
+					}
+					if (!opts?.roles || typeof opts.roles !== "object") {
+						return { accessControl: {} };
+					}
+					const _roles: { [key: string]: Role } = JSON.parse(
+						JSON.stringify(opts.roles),
+					);
+					const accessControl: Record<string, Record<string, string[]>> = {};
+					for (const key of Object.keys(_roles)) {
+						const acs = _roles![key];
+						if (permission) {
+							Object.keys(acs.statements).forEach((key) => {
+								const resource = acs.statements[key];
+								if (
+									resource &&
+									Array.isArray(resource) &&
+									!resource.includes(permission)
+								) {
+									delete acs.statements[key];
+								}
+							});
+						}
+						accessControl[key] = acs.statements;
+					}
+					return ctx.json({ accessControl });
 				},
 			),
 			/**

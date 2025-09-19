@@ -4,6 +4,7 @@ export const defaultStatements = {
 	user: [
 		"create",
 		"list",
+		"list-ac",
 		"set-role",
 		"ban",
 		"impersonate",
@@ -21,6 +22,7 @@ export const adminAc = defaultAc.newRole({
 	user: [
 		"create",
 		"list",
+		"list-ac",
 		"set-role",
 		"ban",
 		"impersonate",
