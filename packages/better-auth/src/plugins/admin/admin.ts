@@ -755,7 +755,7 @@ export const admin = <O extends AdminOptions>(options?: O) => {
 					method: "GET",
 					use: [adminMiddleware],
 					query: z.object({
-						permission: z
+						searchPermission: z
 							.string()
 							.meta({
 								description:
@@ -798,7 +798,7 @@ export const admin = <O extends AdminOptions>(options?: O) => {
 					},
 				},
 				async (ctx) => {
-					const { permission } = ctx.query;
+					const { searchPermission } = ctx.query;
 					const session = ctx.context.session;
 					const canListAc = hasPermission({
 						userId: ctx.context.session.user.id,
@@ -821,13 +821,13 @@ export const admin = <O extends AdminOptions>(options?: O) => {
 					const accessControl: Record<string, Record<string, string[]>> = {};
 					for (const key of Object.keys(_roles)) {
 						const acs = _roles![key];
-						if (permission) {
+						if (searchPermission) {
 							Object.keys(acs.statements).forEach((key) => {
 								const resource = acs.statements[key];
 								if (
 									resource &&
 									Array.isArray(resource) &&
-									!resource.includes(permission)
+									!resource.includes(searchPermission)
 								) {
 									delete acs.statements[key];
 								}
